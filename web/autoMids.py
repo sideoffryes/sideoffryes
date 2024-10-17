@@ -8,11 +8,12 @@ options = webdriver.ChromeOptions()
 options.add_argument('ignore-certificate-errors')
 driver = webdriver.Chrome(options=options)
 
+# let it redirect and load to get the popup
+driver.implicitly_wait(15)
+
 # get mids page
 driver.get("https://mids.usna.edu")
 
-# let it redirect and load to get the popup
-driver.implicitly_wait(3)
 
 # get rid of popup
 wait = WebDriverWait(driver, timeout=2)
@@ -46,10 +47,30 @@ alpha_box.send_keys("251854")
 find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
 find_button.click()
 
-# select schedule table
-schedule = driver.find_element(by=By.CSS_SELECTOR, value="body > table")
+# Get all rows in the table
+table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
 
+# get data from each row
+max_len = 0
+cell_text_list = []
+for row in table_rows:
+    cells = row.find_elements(by=By.TAG_NAME, value="td")
 
-time.sleep(5)
+    curr_cell = []
+    # print out contents of each cell
+    for c in cells:
+        if len(c.text) > max_len:
+            max_len = len(c.text)
+        curr_cell.append(c.text)
+
+    cell_text_list.append(curr_cell)
+
+for cell in cell_text_list:
+    for i in range(len(cell)):
+        if i == 0:
+            print(f"{cell[i]:^{max_len}}", end="")
+        else:
+            print(f"{cell[i]:^{max_len - 5}}", end="")
+    print()
 
 driver.close()
