@@ -1,76 +1,164 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 import time
+import os
 
-# ignore certificate stuff
-options = webdriver.ChromeOptions()
-options.add_argument('ignore-certificate-errors')
-driver = webdriver.Chrome(options=options)
+def get_schedule(driver):
+    # Get user input about alpha
+    ALPHA = ""
+    cmd = input("(1) Use 251854\n(2) Enter custom alpha\ncmd> ")
+    if cmd == "1":
+        ALPHA = "251854"
+    elif cmd == "2":
+        ALPHA = input("Enter custom alpha> ")
+    else:
+        print("ERROR! Invalid command.\nExiting...")
+        exit(1)
 
-# let it redirect and load to get the popup
-driver.implicitly_wait(15)
+    print(f"Querying schedule for {ALPHA} on MIDS...")
 
-# get mids page
-driver.get("https://mids.usna.edu")
+    # select Midshipmen button
+    mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
+    mid_button.click()
 
+    # select query midn schedule link
+    schedule_link = driver.find_element(by=By.CSS_SELECTOR, value="body > table > tbody > tr > td:nth-child(3) > li:nth-child(42) > a")
+    schedule_link.click()
 
-# get rid of popup
-wait = WebDriverWait(driver, timeout=2)
-alert = wait.until(lambda d : d.switch_to.alert)
-alert.accept()
+    # select alpha box
+    alpha_box = driver.find_element(by=By.CSS_SELECTOR, value="#P_ALPHA")
+    alpha_box.send_keys(ALPHA)
 
-# submit username and password
-# get boxes and submit button
-user_box = driver.find_element(by=By.CSS_SELECTOR, value="#username")
-pass_box = driver.find_element(by=By.CSS_SELECTOR, value="#password")
-submit_button = driver.find_element(by=By.CSS_SELECTOR, value="#loginData > div.button-row > span > input")
+    # select find button
+    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
+    find_button.click()
 
-# send info
-user_box.send_keys("m251854")
-pass_box.send_keys("HCFFall011708!?$")
-submit_button.click()
+    # Get all rows in the table
+    table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
 
-# select Midshipmen button
-mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
-mid_button.click()
+    # get data from each row
+    max_len = 0
+    cell_text_list = []
+    for row in table_rows:
+        cells = row.find_elements(by=By.TAG_NAME, value="td")
 
-# select query midn schedule link
-schedule_link = driver.find_element(by=By.CSS_SELECTOR, value="body > table > tbody > tr > td:nth-child(3) > li:nth-child(42) > a")
-schedule_link.click()
+        curr_cell = []
+        # print out contents of each cell
+        for c in cells:
+            if len(c.text) > max_len:
+                max_len = len(c.text)
+            curr_cell.append(c.text)
 
-# select alpha box
-alpha_box = driver.find_element(by=By.CSS_SELECTOR, value="#P_ALPHA")
-alpha_box.send_keys("251854")
+        cell_text_list.append(curr_cell)
 
-# select find button
-find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
-find_button.click()
+    for cell in cell_text_list:
+        for i in range(len(cell)):
+            if i == 0:
+                print(f"{cell[i]:^{max_len}}", end="")
+            else:
+                print(f"{cell[i]:^{max_len - 5}}", end="")
+        print()
 
-# Get all rows in the table
-table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
+def get_photos(driver):
+    # get and validate company
+    company = input("Enter company to query> ")
+    if int(company) < 1 or int(company) > 36:
+        print("ERROR! Invalid company selection.\nExiting...")
+        exit(2)
 
-# get data from each row
-max_len = 0
-cell_text_list = []
-for row in table_rows:
-    cells = row.find_elements(by=By.TAG_NAME, value="td")
+    year = input("Enter class year to query> ")
+    if int(year) < 2023 or int(year) > 2028:
+        print("Error! Invalid class year selection.\nExiting...")
+        exit(3)
 
-    curr_cell = []
-    # print out contents of each cell
-    for c in cells:
-        if len(c.text) > max_len:
-            max_len = len(c.text)
-        curr_cell.append(c.text)
+    # get mids page
+    driver.get("https://mids.usna.edu")
 
-    cell_text_list.append(curr_cell)
+    # select Midshipmen button
+    mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
+    mid_button.click()
 
-for cell in cell_text_list:
-    for i in range(len(cell)):
-        if i == 0:
-            print(f"{cell[i]:^{max_len}}", end="")
-        else:
-            print(f"{cell[i]:^{max_len - 5}}", end="")
-    print()
+    # Select query photos link
+    photos_button = driver.find_element(by=By.CSS_SELECTOR, value="body > table > tbody > tr > td:nth-child(3) > li:nth-child(32) > a")
+    photos_button.click()
 
-driver.close()
+    # Select company box
+    co_list = driver.find_element(by=By.CSS_SELECTOR, value="#P_MICO_CO_NBR")
+    co_list.send_keys(company)
+    co_list.send_keys(Keys.ENTER)
+
+    # Select class year box
+    year_list = driver.find_element(by=By.CSS_SELECTOR, value="#P_CLYE_CLASS_APPLIED_FOR")
+    year_list.send_keys(year)
+    year_list.send_keys(Keys.ENTER)
+
+    # submit form
+    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(11) > p:nth-child(2) > input[type=submit]:nth-child(4)")
+    find_button.click()
+
+    # make sure pics directory exists first
+    if not os.path.exists("./pics"):
+        os.mkdir("./pics")
+
+    table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
+
+    for row in table_rows:
+        cells = row.find_elements(by=By.TAG_NAME, value="td")
+        for c in cells:
+            name = c.find_element(by=By.TAG_NAME, value="font").text
+            name = name.split()[0]
+            img = c.find_element(by=By.TAG_NAME, value="img")
+            # TODO: Figure out method that will return photos with better quality
+            success = img.screenshot(f"./pics/{name}.png")
+            if not success:
+                print("ERROR! Couln't save screenshot")
+
+def load_mids(driver):
+    # get mids page
+    driver.get("https://mids.usna.edu")
+
+    # get rid of popup
+    wait = WebDriverWait(driver, timeout=2)
+    alert = wait.until(lambda d : d.switch_to.alert)
+    alert.accept()
+
+    # submit username and password
+    # get boxes and submit button
+    user_box = driver.find_element(by=By.CSS_SELECTOR, value="#username")
+    pass_box = driver.find_element(by=By.CSS_SELECTOR, value="#password")
+    submit_button = driver.find_element(by=By.CSS_SELECTOR, value="#loginData > div.button-row > span > input")
+
+    # send info
+    user_box.send_keys("m251854")
+    pass_box.send_keys("HCFFall011708!?$")
+    submit_button.click()
+
+if __name__ == "__main__":
+    # Set up Chrome driver
+    # ignore certificate stuff
+    options = webdriver.ChromeOptions()
+    options.add_argument('ignore-certificate-errors')
+    options.add_argument('headless')
+    driver = webdriver.Chrome(options=options)
+
+    # Set implicit wait time
+    driver.implicitly_wait(15)
+
+    # load in mids
+    load_mids(driver)
+
+    # get user commands
+    print("(1) Query Schedule\n(2) Batch Photo Download")
+    cmd = input("cmd> ")
+
+    if cmd == "1":
+        get_schedule(driver)
+    elif cmd == "2":
+        get_photos(driver)
+    else:
+        print("ERROR! Invalid command.\nExiting...")
+        exit(2)
+
+    driver.close()
