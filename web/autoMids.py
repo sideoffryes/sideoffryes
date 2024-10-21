@@ -3,13 +3,12 @@ import time
 import urllib.request
 from datetime import datetime
 
+from colorama import Back, init
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-from colorama import Fore, Back, init
 
-# TODO: Free Period Finder: Return list of mids in a company who have a free period during the given date and period
 #TODO: Webserver?
 
 init(autoreset=True)
@@ -147,24 +146,106 @@ def get_photos(driver):
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
 
 def free_period_finder(driver):
-    """
-    1) Prompt for company number, day, and free period number (ex. 16th Co, Friday, 4th period)
-    2) Load mids.usna.edu
-    3) Click on Schedules - Query Midshipmen
-    4) Query company number
-    5) Iterate through each row of table, select first cell with link, click link
-    6) Period = table row
-        - Ex. 1st period = 3rd row of table
-    7) Day = cell in row
-        - Ex. Monday = 2nd <td>
-    8) Determine if free period or not
-        - Free periods have weird &nbsp; text
-    9) MIDS only displays first 100 people
-        - Click the next button and repeat the same process
-        - Loop -> click next -> same loop?
-            - Probably make that a function or something
-    """
-    return
+    # Company validation
+    co_num = input("Company Number> ")
+    while int(co_num) < 1 or int(co_num) > 36:
+        print(Back.RED + "ERROR! Invalid company selected. Select from [1-36]")
+        co_num = input("Company Number> ")
+    
+    # Day validation
+    while True:
+        # convert day to index
+        day = input("Day of the week [M T W R F]> ")
+        match day:
+            case "M":
+                day = 1
+                break
+            case "T":
+                day = 2
+                break
+            case "W":
+                day = 3
+                break
+            case "R":
+                day = 4
+                break
+            case "F":
+                day = 5
+                break
+            case _:
+                print(Back.RED + "ERROR! Invalid day selected. Select from [M T W R F]")
+    
+    # Period validation
+    period = int(input("Period [1-7]> "))
+    while period < 1 or period > 7:
+        print(Back.RED + "ERROR! Invalid class period selected. Select from [1-7]")
+        period = int(input("Period [1-7]> "))
+
+    # get mids page
+    driver.get("https://mids.usna.edu")
+
+    # select midshipmen link
+    mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
+    mid_button.click()
+
+    # Select schedules link
+    schedules = driver.find_element(by=By.CSS_SELECTOR, value="body > table > tbody > tr > td:nth-child(3) > li:nth-child(42) > a")
+    schedules.click()
+
+    # Select company box
+    co_box = driver.find_element(by=By.CSS_SELECTOR, value="#P_MICO_CO_NBR")
+    co_box.send_keys(co_num)
+
+    # Submit form
+    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
+    find_button.click()
+
+    # save list of links on the page
+    links = []
+    # get rows from table on first page
+    rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
+    for r in rows:
+        schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
+        links.append(schedule_link.get_attribute("href"))
+
+    # Go to the next page and get the rest of the links
+    next = driver.find_element(by=By.XPATH, value="/html/body/form/input[11]")
+    next.click()
+    
+    # get rows from table on first page
+    rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
+    for r in rows:
+        schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
+        links.append(schedule_link.get_attribute("href"))
+
+    # visit each of the links
+    for l in links:
+        # load page with schedule
+        driver.get(l)
+
+        # Get name
+        name = driver.find_element(by=By.XPATH, value="/html/body/h3/table/tbody/tr/td[1]/font/b/font").text
+        name = name.replace("/", " ")
+        name = name.split()
+
+        if len(name) == 4:
+            name = f"{name[0]} {name[1]}"
+        elif len(name) == 5:
+            name = f"{name[0]} {name[2]}"
+        else:
+            name = f"{name[0]}"
+
+        # get rows from table
+        rows = driver.find_elements(by=By.CSS_SELECTOR, value="body > table > tbody > tr")
+        period_row = rows[period + 1]
+        cells = period_row.find_elements(by=By.TAG_NAME, value="td")
+        day_cell = cells[day]
+        course = day_cell.text
+
+        if course == " ":
+            print(Back.GREEN + f"{name} HAS A FREE PERIOD")
+        else:
+            print(Back.RED + f"{name} HAS {course}")
 
 def load_mids(driver):
     # get mids page
