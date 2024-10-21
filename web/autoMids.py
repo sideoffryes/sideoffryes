@@ -4,6 +4,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 import time
 import os
+import urllib.request
+from datetime import datetime
 
 def get_schedule(driver):
     # Get user input about alpha
@@ -99,21 +101,39 @@ def get_photos(driver):
     find_button.click()
 
     # make sure pics directory exists first
-    if not os.path.exists("./pics"):
-        os.mkdir("./pics")
+    now = datetime.now()
+    timestamp = now.strftime("%d%b%Y-%H_%M_%S")
+    path = f"./pics/{timestamp}-{company}-{year}"
+    os.makedirs(path)
 
     table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
 
     for row in table_rows:
         cells = row.find_elements(by=By.TAG_NAME, value="td")
         for c in cells:
+            # Extract name
             name = c.find_element(by=By.TAG_NAME, value="font").text
-            name = name.split()[0]
+            name = name.replace("/", " ")
+            name = name.split()
+            
+            # change formatting if they don't have a middle name or have 2 middle names 
+            # 1 middle name
+            if len(name) == 5:
+                fname = f"{name[0][0]}{name[1][0]}{name[2]}"
+            # 2 middle names
+            elif len(name) == 6:
+                fname = f"{name[0][0]}{name[1][0]}{name[2][0]}{name[3]}"
+            # No middle name
+            elif len(name) == 4:
+                fname = f"{name[0][0]}{name[1]}"
+            # idk whatever else
+            else:
+                fname = f"{name[0]}"
+
+            # Extract image URL
             img = c.find_element(by=By.TAG_NAME, value="img")
-            # TODO: Figure out method that will return photos with better quality
-            success = img.screenshot(f"./pics/{name}.png")
-            if not success:
-                print("ERROR! Couln't save screenshot")
+            url = img.get_attribute("src")
+            urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
 
 def load_mids(driver):
     # get mids page
