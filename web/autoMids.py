@@ -9,20 +9,26 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from colorama import Fore, Back, init
 
+# TODO: Free Period Finder: Return list of mids in a company who have a free period during the given date and period
+#TODO: Webserver?
+
 init(autoreset=True)
 
 def get_schedule(driver):
     # Get user input about alpha
     ALPHA = ""
-    cmd = input("(1) Use 251854\n(2) Enter custom alpha\ncmd> ")
-    while int(cmd) < 1 or int(cmd) > 2:
-        print(Back.RED + "ERROR! Invalid command.")
-        cmd = input("(1) Use 251854\n(2) Enter custom alpha\ncmd> ")
+    cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
 
-    if cmd == "1":
-        ALPHA = "251854"
-    elif cmd == "2":
-        ALPHA = input("Enter custom alpha> ")
+    match cmd:
+        case "1":
+            ALPHA = "251854"
+        case "2":
+            ALPHA = input("Enter custom alpha> ")
+        case "3":
+            return
+        case _:
+            print(Back.RED + "ERROR! Invalid command.")
+            cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
 
     print(f"Querying schedule for {ALPHA} on MIDS...")
 
@@ -140,6 +146,26 @@ def get_photos(driver):
             url = img.get_attribute("src")
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
 
+def free_period_finder(driver):
+    """
+    1) Prompt for company number, day, and free period number (ex. 16th Co, Friday, 4th period)
+    2) Load mids.usna.edu
+    3) Click on Schedules - Query Midshipmen
+    4) Query company number
+    5) Iterate through each row of table, select first cell with link, click link
+    6) Period = table row
+        - Ex. 1st period = 3rd row of table
+    7) Day = cell in row
+        - Ex. Monday = 2nd <td>
+    8) Determine if free period or not
+        - Free periods have weird &nbsp; text
+    9) MIDS only displays first 100 people
+        - Click the next button and repeat the same process
+        - Loop -> click next -> same loop?
+            - Probably make that a function or something
+    """
+    return
+
 def load_mids(driver):
     # get mids page
     driver.get("https://mids.usna.edu")
@@ -175,18 +201,19 @@ if __name__ == "__main__":
     load_mids(driver)
 
     # get user commands
-    print("(1) Query Schedule\n(2) Batch Photo Download\n(3) Exit")
-    cmd = input("cmd> ")
+    while True:
+        print("(1) Query Schedule\n(2) Batch Photo Download\n(3) Free Period Finder\n(4) Exit")
+        cmd = input("cmd> ")
 
-    while cmd != "3":
-        if int(cmd) < 1 or int(cmd) > 2:
-            print(Back.RED + "ERROR! Invalid command.")
-            print("(1) Query Schedule\n(2) Batch Photo Download\n(3) Exit")
-            cmd = input("cmd> ")
-        else:
-            if cmd == "1":
+        match cmd:
+            case "1":
                 get_schedule(driver)
-            elif cmd == "2":
+            case "2":
                 get_photos(driver)
-
-    driver.close()
+            case "3":
+                free_period_finder(driver)
+            case "4":
+                driver.close()
+                exit(0)
+            case _:
+                print(Back.RED + "ERROR! Invalid command.")
