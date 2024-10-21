@@ -1,23 +1,28 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
-import time
 import os
+import time
 import urllib.request
 from datetime import datetime
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from colorama import Fore, Back, init
+
+init(autoreset=True)
 
 def get_schedule(driver):
     # Get user input about alpha
     ALPHA = ""
     cmd = input("(1) Use 251854\n(2) Enter custom alpha\ncmd> ")
+    while int(cmd) < 1 or int(cmd) > 2:
+        print(Back.RED + "ERROR! Invalid command.")
+        cmd = input("(1) Use 251854\n(2) Enter custom alpha\ncmd> ")
+
     if cmd == "1":
         ALPHA = "251854"
     elif cmd == "2":
         ALPHA = input("Enter custom alpha> ")
-    else:
-        print("ERROR! Invalid command.\nExiting...")
-        exit(1)
 
     print(f"Querying schedule for {ALPHA} on MIDS...")
 
@@ -66,14 +71,14 @@ def get_schedule(driver):
 def get_photos(driver):
     # get and validate company
     company = input("Enter company to query> ")
-    if int(company) < 1 or int(company) > 36:
-        print("ERROR! Invalid company selection.\nExiting...")
-        exit(2)
+    while int(company) < 1 or int(company) > 36:
+        print("ERROR! Invalid company selection.")
+        company = input("Enter company to query> ")
 
     year = input("Enter class year to query> ")
-    if int(year) < 2023 or int(year) > 2028:
-        print("Error! Invalid class year selection.\nExiting...")
-        exit(3)
+    while int(year) < 2023 or int(year) > 2028:
+        print("Error! Invalid class year selection.")
+        year = input("Enter class year to query> ")
 
     # get mids page
     driver.get("https://mids.usna.edu")
@@ -170,15 +175,18 @@ if __name__ == "__main__":
     load_mids(driver)
 
     # get user commands
-    print("(1) Query Schedule\n(2) Batch Photo Download")
+    print("(1) Query Schedule\n(2) Batch Photo Download\n(3) Exit")
     cmd = input("cmd> ")
 
-    if cmd == "1":
-        get_schedule(driver)
-    elif cmd == "2":
-        get_photos(driver)
-    else:
-        print("ERROR! Invalid command.\nExiting...")
-        exit(2)
+    while cmd != "3":
+        if int(cmd) < 1 or int(cmd) > 2:
+            print(Back.RED + "ERROR! Invalid command.")
+            print("(1) Query Schedule\n(2) Batch Photo Download\n(3) Exit")
+            cmd = input("cmd> ")
+        else:
+            if cmd == "1":
+                get_schedule(driver)
+            elif cmd == "2":
+                get_photos(driver)
 
     driver.close()
