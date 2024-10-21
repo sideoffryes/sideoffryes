@@ -9,8 +9,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
-#TODO: Webserver?
-
 init(autoreset=True)
 
 def get_schedule(driver):
@@ -146,6 +144,82 @@ def get_photos(driver):
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
 
 def free_period_finder(driver):
+    # Branch for if looking up a group or just 1 mid
+    print(f"Select Search Type:\n(1) Individual\n(2) Group")
+    search_type = input("cmd> ")
+
+    if search_type == "1":
+        individual_search(driver)
+    elif search_type == "2":
+        group_search(driver)
+    else:
+        print(Back.RED + "ERROR! Invalid search type selected.")
+
+def individual_search(driver):
+    print(f"Enter the individual's alpha")
+    alpha = input("Alpha> ")
+
+    # get mids page
+    driver.get("https://mids.usna.edu")
+
+    # select midshipmen link
+    mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
+    mid_button.click()
+
+    # Select schedules link
+    schedules = driver.find_element(by=By.CSS_SELECTOR, value="body > table > tbody > tr > td:nth-child(3) > li:nth-child(42) > a")
+    schedules.click()
+
+    # input alpha
+    alpha_box = driver.find_element(by=By.XPATH, value='//*[@id="P_ALPHA"]')
+    alpha_box.send_keys(alpha)
+
+    # Submit form
+    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
+    find_button.click()
+
+    # Get name
+    name = driver.find_element(by=By.XPATH, value="/html/body/h3/table/tbody/tr/td[1]/font/b/font").text
+    name = name.replace("/", " ")
+    name = name.split()
+
+    if len(name) == 4:
+        name = f"{name[0]} {name[1]}"
+    elif len(name) == 5:
+        name = f"{name[0]} {name[2]}"
+    else:
+        name = f"{name[0]}"
+
+    # get rows from table
+    # TODO: FIX THIS
+    rows = driver.find_elements(by=By.CSS_SELECTOR, value="body > table > tbody > tr")
+    header = rows[1]
+    rows = rows[2:]
+
+    # Print out header
+    head_cells = header.find_elements(by=By.TAG_NAME, value="th")
+    header_str = "   "
+    for c in head_cells:
+        day = c.find_element(by=By.TAG_NAME, value="font").text
+        header_str += f"{day:^7}"
+    print(header_str)
+
+    for r in rows:
+        cells = r.find_elements(by=By.TAG_NAME, value="td")
+        period_str = ""
+        for c in cells:
+            course = c.find_element(by=By.TAG_NAME, value="font").text
+            if course.isnumeric():
+                period_str += f"{course:^3}"
+            else:
+                if course == " ":
+                    period_str += f"{Back.GREEN}{course:^7}{Back.RESET}"
+                else:
+                    period_str += f"{course:^7}"
+        print(period_str)
+    print()
+
+def group_search(driver):
     # Company validation
     co_num = input("Company Number> ")
     while int(co_num) < 1 or int(co_num) > 36:
@@ -181,6 +255,11 @@ def free_period_finder(driver):
         print(Back.RED + "ERROR! Invalid class period selected. Select from [1-7]")
         period = int(input("Period [1-7]> "))
 
+    # get class years to search
+    print(f"Enter class years to search, separated with spaces [2025 - 2028]")
+    years = input("years> ").split()
+    years = [y[2:] for y in years]
+
     # get mids page
     driver.get("https://mids.usna.edu")
 
@@ -195,59 +274,6 @@ def free_period_finder(driver):
     # Select company box
     co_box = driver.find_element(by=By.CSS_SELECTOR, value="#P_MICO_CO_NBR")
     co_box.send_keys(co_num)
-
-    # Branch for if looking up a group or just 1 mid
-    print(f"Select Search Type:\n(1) Individual\n(2) Group")
-    search_type = input("cmd> ")
-
-    if search_type == "1":
-        individual_search(driver, period, day)
-    elif search_type == "2":
-        group_search(driver, period, day)
-    else:
-        print(Back.RED + "ERROR! Invalid search type selected.")
-
-def individual_search(driver, period, day):
-    print(f"Enter the individual's alpha")
-    alpha = input("Alpha> ")
-
-    alpha_box = driver.find_element(by=By.XPATH, value='//*[@id="P_ALPHA"]')
-    alpha_box.send_keys(alpha)
-
-    # Submit form
-    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
-    find_button.click()
-
-    # Get name
-    name = driver.find_element(by=By.XPATH, value="/html/body/h3/table/tbody/tr/td[1]/font/b/font").text
-    name = name.replace("/", " ")
-    name = name.split()
-
-    if len(name) == 4:
-        name = f"{name[0]} {name[1]}"
-    elif len(name) == 5:
-        name = f"{name[0]} {name[2]}"
-    else:
-        name = f"{name[0]}"
-
-    # get rows from table
-    rows = driver.find_elements(by=By.CSS_SELECTOR, value="body > table > tbody > tr")
-    period_row = rows[period + 1]
-    cells = period_row.find_elements(by=By.TAG_NAME, value="td")
-    day_cell = cells[day]
-    course = day_cell.text
-
-    if course == " ":
-        print(Back.GREEN + f"{name} HAS A FREE PERIOD")
-    else:
-        print(Back.RED + f"{name} HAS {course}")
-
-def group_search(driver, period, day):
-    # get class years to search
-    print(f"Enter class years to search, separated with spaces [2025 - 2028]")
-    years = input("years> ").split()
-    years = [y[2:] for y in years]
-    print("YEARS TO SEARCH: ", years)
 
     # Submit form
     find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
@@ -331,7 +357,7 @@ if __name__ == "__main__":
     # ignore certificate stuff
     options = webdriver.ChromeOptions()
     options.add_argument('ignore-certificate-errors')
-    # options.add_argument('headless')
+    options.add_argument('headless')
     driver = webdriver.Chrome(options=options)
 
     # Set implicit wait time
