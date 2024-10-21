@@ -196,6 +196,59 @@ def free_period_finder(driver):
     co_box = driver.find_element(by=By.CSS_SELECTOR, value="#P_MICO_CO_NBR")
     co_box.send_keys(co_num)
 
+    # Branch for if looking up a group or just 1 mid
+    print(f"Select Search Type:\n(1) Individual\n(2) Group")
+    search_type = input("cmd> ")
+
+    if search_type == "1":
+        individual_search(driver, period, day)
+    elif search_type == "2":
+        group_search(driver, period, day)
+    else:
+        print(Back.RED + "ERROR! Invalid search type selected.")
+
+def individual_search(driver, period, day):
+    print(f"Enter the individual's alpha")
+    alpha = input("Alpha> ")
+
+    alpha_box = driver.find_element(by=By.XPATH, value='//*[@id="P_ALPHA"]')
+    alpha_box.send_keys(alpha)
+
+    # Submit form
+    find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
+    find_button.click()
+
+    # Get name
+    name = driver.find_element(by=By.XPATH, value="/html/body/h3/table/tbody/tr/td[1]/font/b/font").text
+    name = name.replace("/", " ")
+    name = name.split()
+
+    if len(name) == 4:
+        name = f"{name[0]} {name[1]}"
+    elif len(name) == 5:
+        name = f"{name[0]} {name[2]}"
+    else:
+        name = f"{name[0]}"
+
+    # get rows from table
+    rows = driver.find_elements(by=By.CSS_SELECTOR, value="body > table > tbody > tr")
+    period_row = rows[period + 1]
+    cells = period_row.find_elements(by=By.TAG_NAME, value="td")
+    day_cell = cells[day]
+    course = day_cell.text
+
+    if course == " ":
+        print(Back.GREEN + f"{name} HAS A FREE PERIOD")
+    else:
+        print(Back.RED + f"{name} HAS {course}")
+
+def group_search(driver, period, day):
+    # get class years to search
+    print(f"Enter class years to search, separated with spaces [2025 - 2028]")
+    years = input("years> ").split()
+    years = [y[2:] for y in years]
+    print("YEARS TO SEARCH: ", years)
+
     # Submit form
     find_button = driver.find_element(by=By.CSS_SELECTOR, value="body > form:nth-child(8) > p:nth-child(2) > input[type=submit]:nth-child(4)")
     find_button.click()
@@ -205,8 +258,11 @@ def free_period_finder(driver):
     # get rows from table on first page
     rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
     for r in rows:
-        schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
-        links.append(schedule_link.get_attribute("href"))
+        alpha = r.find_element(by=By.CSS_SELECTOR, value="td > font > a").text
+        y = alpha[:2]
+        if y in years:
+            schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
+            links.append(schedule_link.get_attribute("href"))
 
     # Go to the next page and get the rest of the links
     next = driver.find_element(by=By.XPATH, value="/html/body/form/input[11]")
@@ -215,8 +271,11 @@ def free_period_finder(driver):
     # get rows from table on first page
     rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
     for r in rows:
-        schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
-        links.append(schedule_link.get_attribute("href"))
+        alpha = r.find_element(by=By.CSS_SELECTOR, value="td > font > a").text
+        y = alpha[:2]
+        if y in years:
+            schedule_link = r.find_element(by=By.CSS_SELECTOR, value="td > font > a")
+            links.append(schedule_link.get_attribute("href"))
 
     # visit each of the links
     for l in links:
@@ -272,7 +331,7 @@ if __name__ == "__main__":
     # ignore certificate stuff
     options = webdriver.ChromeOptions()
     options.add_argument('ignore-certificate-errors')
-    options.add_argument('headless')
+    # options.add_argument('headless')
     driver = webdriver.Chrome(options=options)
 
     # Set implicit wait time
