@@ -27,6 +27,9 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarResponsive">
                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="#schedulesearch">Schedule Search</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="#batchphotos">Batch Photo Download</a></li>
+                        <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="#freeperiods">Free Period Finder</a></li>
                         <li class="nav-item mx-0 mx-lg-1"><a class="nav-link py-3 px-0 px-lg-3 rounded" href="#about">About</a></li>
                     </ul>
                 </div>
@@ -37,26 +40,53 @@
             <div class="container d-flex align-items-center flex-column">
                 <!-- Masthead Heading-->
                 <h1 class="masthead-heading text-uppercase mb-0">Automating MIDS</h1>
-                <!-- Icon Divider-->
+            </div>
+        </header>
+        <!-- Schedule Search Section -->
+        <section class="page-section bg-secondary text-white mb-0" id="schedulesearch">
+            <div class="container">
+                <h2 class="text-center">Schedule Search</h2>
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
                 </div>
-            </div>
-        </header>
-        <!-- Buttons to Endpoints -->
-        <section class="page-section bg-secondary text-white mb-0" id="options">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-4 ms-auto">
-                        <a class="btn btn-x1 btn-outline-light" href="schedule">Schedule Search</a>
-                    </div>
-                    <div class="col-lg-4 ms-auto">
-                        <a class="btn btn-x1 btn-outline-light" href="photos">Batch Photo Download</a>
-                    </div>
-                    <div class="col-lg-4 ms-auto">
-                        <a class="btn btn-x1 btn-outline-light" href="freeperiods">Free Period Finder</a>
+                <div class="row justify-content-center mb-3">
+                    <form id="scheduleForm" action="/schedule" method="post">
+                        <!-- Alpha input -->
+                         <div class="form-floating mb-3">
+                            <input class="form-control" id="alpha" name="alpha" type="text" placeholder="Enter the alpha to search..." data-sb-validations="required">
+                            <label for="alpha">Alpha</label>
+                            <div class="invalid-feedback" data-sb-feedback="alpha:required">An alpha is required.</div>
+                         </div>
+                         <button class="btn btn-primary btx-x1 disables" id="submitButton" type="submit">Query</button>
+                    </form>
+                </div>
+                <div class="container">
+                    <div class="row justify-content-center">
+                        {% if schedule %}
+                            {{ schedule | safe }}
+                        {% endif %}
                     </div>
                 </div>
+            </div>
+        </section>
+        <!-- Batch Photo Download Section -->
+        <section class="page-section bg-primary text-white mb-0" id="batchphotos">
+            <div class="container">
+                <h2 class="text-center">Batch Photo Download</h2>
+                <div class="divider-custom divider-light">
+                    <div class="divider-custom-line"></div>
+                </div>
+                
+            </div>
+        </section>
+        <!-- Free Period Finder -->
+        <section class="page-section bg-secondary text-white mb-0" id="freeperiods">
+            <div class="container">
+                <h2 class="text-center">Free Period Finder</h2>
+                <div class="divider-custom divider-light">
+                    <div class="divider-custom-line"></div>
+                </div>
+
             </div>
         </section>
         <!-- About Section-->

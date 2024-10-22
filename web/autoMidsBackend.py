@@ -11,23 +11,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 init(autoreset=True)
 
-def get_schedule(driver):
-    # Get user input about alpha
-    ALPHA = ""
-    cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
+def get_schedule(ALPHA):
+    options = webdriver.ChromeOptions()
+    options.add_argument('ignore-certificate-errors')
+    options.add_argument('headless')
+    driver = webdriver.Chrome(options=options)
 
-    match cmd:
-        case "1":
-            ALPHA = "251854"
-        case "2":
-            ALPHA = input("Enter custom alpha> ")
-        case "3":
-            return
-        case _:
-            print(Back.RED + "ERROR! Invalid command.")
-            cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
+    # Set implicit wait time
+    driver.implicitly_wait(15)
 
-    print(f"Querying schedule for {ALPHA} on MIDS...")
+    # load mids up
+    load_mids(driver)
 
     # select Midshipmen button
     mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
@@ -51,25 +45,19 @@ def get_schedule(driver):
     # get data from each row
     max_len = 0
     cell_text_list = []
+    ret_str = "<table class='table-bordered'><tbody>"
     for row in table_rows:
+        ret_str += "<tr>"
         cells = row.find_elements(by=By.TAG_NAME, value="td")
 
-        curr_cell = []
-        # print out contents of each cell
         for c in cells:
-            if len(c.text) > max_len:
-                max_len = len(c.text)
-            curr_cell.append(c.text)
+            ret_str += "<td class='text-center'>"
+            ret_str += c.text
+            ret_str += "</td>"
 
-        cell_text_list.append(curr_cell)
-
-    for cell in cell_text_list:
-        for i in range(len(cell)):
-            if i == 0:
-                print(f"{cell[i]:^{max_len}}", end="")
-            else:
-                print(f"{cell[i]:^{max_len - 5}}", end="")
-        print()
+        ret_str += "<tr>"
+    ret_str += "</tbody></table>"
+    return ret_str
 
 def get_photos(driver):
     # get and validate company
