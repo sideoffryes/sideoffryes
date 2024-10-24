@@ -13,9 +13,12 @@ def schedules():
     result = get_schedule(alpha)
     return render_template('index.html', schedule=result)
 
-@app.route('/photos')
+@app.route('/photos', methods=["POST"])
 def photos():
-    return render_template('index.html')
+    company = request.form['company']
+    year = request.form['year']
+    photos = get_photos(company, year)
+    return render_template('index.html', photos=photos[1], path=photos[0])
 
 @app.route('/freeperiods')
 def freeperiods():

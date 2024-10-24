@@ -76,7 +76,29 @@
                 <div class="divider-custom divider-light">
                     <div class="divider-custom-line"></div>
                 </div>
-                
+                <div class="row justify-content-center mb-3">
+                    <form id="scheduleForm" action="/photos" method="post">
+                        <!-- Company input -->
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="company" name="company" type="text" placeholder="Enter the company to search..." data-sb-validations="required">
+                            <label for="alpha">Company</label>
+                            <div class="invalid-feedback" data-sb-feedback="alpha:required">A company is required.</div>
+                        </div>
+                        <!-- Class year input -->
+                        <div class="form-floating mb-3">
+                            <input class="form-control" id="year" name="year" type="text" placeholder="Enter the class year to search..." data-sb-validations="required">
+                            <label for="alpha">Class Year</label>
+                            <div class="invalid-feedback" data-sb-feedback="alpha:required">A class year is required.</div>
+                        </div>
+                        <button class="btn btn-secondary btx-x1 disables" id="submitButton" type="submit">Query</button>
+                    </form>
+                </div>
+            </div>
+            <!-- Container to display photos -->
+            <div class="container">
+                {% for image in photos %}
+                    <img src="{{url_for('static', filename=path+image)}}">
+                {% endfor %}
             </div>
         </section>
         <!-- Free Period Finder -->

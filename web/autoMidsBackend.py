@@ -12,16 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 init(autoreset=True)
 
 def get_schedule(ALPHA):
-    options = webdriver.ChromeOptions()
-    options.add_argument('ignore-certificate-errors')
-    options.add_argument('headless')
-    driver = webdriver.Chrome(options=options)
-
-    # Set implicit wait time
-    driver.implicitly_wait(15)
-
-    # load mids up
-    load_mids(driver)
+    driver = load_mids()
 
     # select Midshipmen button
     mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
@@ -55,21 +46,23 @@ def get_schedule(ALPHA):
             ret_str += c.text
             ret_str += "</td>"
 
-        ret_str += "<tr>"
+        ret_str += "</tr>"
     ret_str += "</tbody></table>"
+
+    driver.close()
+
     return ret_str
 
-def get_photos(driver):
+def get_photos(company, year):
+    # setup driver
+    driver = load_mids()
+
     # get and validate company
-    company = input("Enter company to query> ")
     while int(company) < 1 or int(company) > 36:
         print("ERROR! Invalid company selection.")
-        company = input("Enter company to query> ")
 
-    year = input("Enter class year to query> ")
     while int(year) < 2023 or int(year) > 2028:
         print("Error! Invalid class year selection.")
-        year = input("Enter class year to query> ")
 
     # get mids page
     driver.get("https://mids.usna.edu")
@@ -99,13 +92,17 @@ def get_photos(driver):
     # make sure pics directory exists first
     now = datetime.now()
     timestamp = now.strftime("%d%b%Y-%H_%M_%S")
-    path = f"./pics/{timestamp}-{company}-{year}"
+    path = f"./static/photos/{timestamp}-{company}-{year}"
     os.makedirs(path)
 
     table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
 
+    # object to store dir path and all file names
+    photos = (f"photos/{timestamp}-{company}-{year}/", [])
+
     for row in table_rows:
         cells = row.find_elements(by=By.TAG_NAME, value="td")
+        total = len(cells)
         for c in cells:
             # Extract name
             name = c.find_element(by=By.TAG_NAME, value="font").text
@@ -126,10 +123,16 @@ def get_photos(driver):
             else:
                 fname = f"{name[0]}"
 
+            # add name to photos obj
+            photos[1].append(f"{fname}.jpg")
+
             # Extract image URL
             img = c.find_element(by=By.TAG_NAME, value="img")
             url = img.get_attribute("src")
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
+
+    driver.close()
+    return photos
 
 def free_period_finder(driver):
     # Branch for if looking up a group or just 1 mid
@@ -319,7 +322,15 @@ def group_search(driver):
         else:
             print(Back.RED + f"{name} HAS {course}")
 
-def load_mids(driver):
+def load_mids() -> webdriver:
+    options = webdriver.ChromeOptions()
+    options.add_argument('ignore-certificate-errors')
+    options.add_argument('headless')
+    driver = webdriver.Chrome(options=options)
+
+    # Set implicit wait time
+    driver.implicitly_wait(15)
+
     # get mids page
     driver.get("https://mids.usna.edu")
 
@@ -338,6 +349,8 @@ def load_mids(driver):
     user_box.send_keys("m251854")
     pass_box.send_keys("HCFFall011708!?$")
     submit_button.click()
+
+    return driver
 
 if __name__ == "__main__":
     # Set up Chrome driver
