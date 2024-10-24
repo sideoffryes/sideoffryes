@@ -99,6 +99,11 @@
                 {% for image in photos %}
                     <img src="{{url_for('static', filename=path+image)}}">
                 {% endfor %}
+                <div class="text-center">
+                    <a href="{{url_for('download_all', dir_name=path)}}">
+                        <button>Download All Photos</button>
+                    </a>
+                </div>
             </div>
         </section>
         <!-- Free Period Finder -->
