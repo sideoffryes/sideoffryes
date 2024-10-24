@@ -1,5 +1,4 @@
 import os
-import time
 import urllib.request
 from datetime import datetime
 
@@ -49,14 +48,12 @@ def get_schedule(ALPHA):
         ret_str += "</tr>"
     ret_str += "</tbody></table>"
 
-    driver.close()
+    driver.quit()
 
     return ret_str
 
 def get_photos(company, year):
-    # setup driver
     driver = load_mids()
-
     # get and validate company
     while int(company) < 1 or int(company) > 36:
         print("ERROR! Invalid company selection.")
@@ -102,7 +99,6 @@ def get_photos(company, year):
 
     for row in table_rows:
         cells = row.find_elements(by=By.TAG_NAME, value="td")
-        total = len(cells)
         for c in cells:
             # Extract name
             name = c.find_element(by=By.TAG_NAME, value="font").text
@@ -131,7 +127,7 @@ def get_photos(company, year):
             url = img.get_attribute("src")
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
 
-    driver.close()
+    driver.quit()
     return photos
 
 def free_period_finder(driver):

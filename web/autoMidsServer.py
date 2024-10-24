@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, render_template, send_file
-from autoMidsBackend import get_schedule, get_photos
 import io
-import zipfile
 import os
+import zipfile
+
+from flask import Flask, render_template, request, send_file
+
+from autoMidsBackend import get_photos, get_schedule
 
 app = Flask(__name__)
 
