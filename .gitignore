@@ -1,3 +1,4 @@
 static/
 pics/
 __pycache__/
+*.env
