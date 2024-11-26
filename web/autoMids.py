@@ -6,6 +6,7 @@ import time
 # ignore certificate stuff
 options = webdriver.ChromeOptions()
 options.add_argument('ignore-certificate-errors')
+# options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
 
 # get mids page
@@ -48,7 +49,6 @@ find_button.click()
 
 # select schedule table
 schedule = driver.find_element(by=By.CSS_SELECTOR, value="body > table")
-
 
 time.sleep(5)
 
