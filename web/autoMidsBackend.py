@@ -1,5 +1,4 @@
 import os
-import time
 import urllib.request
 from datetime import datetime
 
@@ -11,23 +10,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 init(autoreset=True)
 
-def get_schedule(driver):
-    # Get user input about alpha
-    ALPHA = ""
-    cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
-
-    match cmd:
-        case "1":
-            ALPHA = "251854"
-        case "2":
-            ALPHA = input("Enter custom alpha> ")
-        case "3":
-            return
-        case _:
-            print(Back.RED + "ERROR! Invalid command.")
-            cmd = input("(1) Use 251854\n(2) Enter custom alpha\n(3) Back to Menu\ncmd> ")
-
-    print(f"Querying schedule for {ALPHA} on MIDS...")
+def get_schedule(ALPHA):
+    driver = load_mids()
 
     # select Midshipmen button
     mid_button = driver.find_element(by=By.CSS_SELECTOR, value="#mainmenu > tbody > tr:nth-child(1) > td:nth-child(3) > a:nth-child(3)")
@@ -51,37 +35,31 @@ def get_schedule(driver):
     # get data from each row
     max_len = 0
     cell_text_list = []
+    ret_str = "<table class='table-bordered'><tbody>"
     for row in table_rows:
+        ret_str += "<tr>"
         cells = row.find_elements(by=By.TAG_NAME, value="td")
 
-        curr_cell = []
-        # print out contents of each cell
         for c in cells:
-            if len(c.text) > max_len:
-                max_len = len(c.text)
-            curr_cell.append(c.text)
+            ret_str += "<td class='text-center'>"
+            ret_str += c.text
+            ret_str += "</td>"
 
-        cell_text_list.append(curr_cell)
+        ret_str += "</tr>"
+    ret_str += "</tbody></table>"
 
-    for cell in cell_text_list:
-        for i in range(len(cell)):
-            if i == 0:
-                print(f"{cell[i]:^{max_len}}", end="")
-            else:
-                print(f"{cell[i]:^{max_len - 5}}", end="")
-        print()
+    driver.quit()
 
-def get_photos(driver):
+    return ret_str
+
+def get_photos(company, year):
+    driver = load_mids()
     # get and validate company
-    company = input("Enter company to query> ")
     while int(company) < 1 or int(company) > 36:
         print("ERROR! Invalid company selection.")
-        company = input("Enter company to query> ")
 
-    year = input("Enter class year to query> ")
     while int(year) < 2023 or int(year) > 2028:
         print("Error! Invalid class year selection.")
-        year = input("Enter class year to query> ")
 
     # get mids page
     driver.get("https://mids.usna.edu")
@@ -111,10 +89,13 @@ def get_photos(driver):
     # make sure pics directory exists first
     now = datetime.now()
     timestamp = now.strftime("%d%b%Y-%H_%M_%S")
-    path = f"./pics/{timestamp}-{company}-{year}"
+    path = f"./static/photos/{timestamp}-{company}-{year}"
     os.makedirs(path)
 
     table_rows = driver.find_elements(by=By.CLASS_NAME, value="cgrldatarow")
+
+    # object to store dir path and all file names
+    photos = (f"photos/{timestamp}-{company}-{year}/", [])
 
     for row in table_rows:
         cells = row.find_elements(by=By.TAG_NAME, value="td")
@@ -138,10 +119,16 @@ def get_photos(driver):
             else:
                 fname = f"{name[0]}"
 
+            # add name to photos obj
+            photos[1].append(f"{fname}.jpg")
+
             # Extract image URL
             img = c.find_element(by=By.TAG_NAME, value="img")
             url = img.get_attribute("src")
             urllib.request.urlretrieve(url, f"{path}/{fname}.jpg")
+
+    driver.quit()
+    return photos
 
 def free_period_finder(driver):
     # Branch for if looking up a group or just 1 mid
@@ -331,7 +318,15 @@ def group_search(driver):
         else:
             print(Back.RED + f"{name} HAS {course}")
 
-def load_mids(driver):
+def load_mids() -> webdriver:
+    options = webdriver.ChromeOptions()
+    options.add_argument('ignore-certificate-errors')
+    options.add_argument('headless')
+    driver = webdriver.Chrome(options=options)
+
+    # Set implicit wait time
+    driver.implicitly_wait(15)
+
     # get mids page
     driver.get("https://mids.usna.edu")
 
@@ -350,6 +345,8 @@ def load_mids(driver):
     user_box.send_keys("m251854")
     pass_box.send_keys("HCFFall011708!?$")
     submit_button.click()
+
+    return driver
 
 if __name__ == "__main__":
     # Set up Chrome driver
