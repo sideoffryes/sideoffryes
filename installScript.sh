@@ -1,30 +1,11 @@
 # fetch and install all updates
-echo "[*] sudo apt update && sudo apt upgrade -y"
 sudo apt update && sudo apt upgrade -y
 
-# python, pip, pwntools, and ROPgadget
-echo "[*] sudo apt install -y python3 python3-pip git build-essential"
-sudo sudo apt install -y python3 python3-pip git build-essential
-
-# gdb
-echo "[*] sudo apt install gdb"
-sudo apt install gdb
+sudo sudo apt install -y python3 python3-pip git build-essential gdb net-tools unzip zip htop
 
 # gef
 echo "[*] bash -c '$(wget --no-check-certificate https://gef.blah.cat/sh -O -)'"
 bash -c "$(wget --no-check-certificate https://gef.blah.cat/sh -O -)"
-
-# net-tools
-echo "[*] sudo apt install net-tools"
-sudo apt install net-tools
-
-# unzip
-echo "[*] sudo apt install unzip && sudo apt install zip"
-sudo apt install unzip && sudo apt install zip
-
-# htop 
-echo "[*] sudo apt install htop"
-sudo apt install htop
 
 # miniconda
 echo "mkdir -p ~/miniconda3
